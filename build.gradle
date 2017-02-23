@@ -33,6 +33,7 @@ dependencies {
 	compile 'com.google.api-client:google-api-client:1.22.0'
 	compile 'com.google.oauth-client:google-oauth-client-jetty:1.22.0'
 	compile 'com.google.apis:google-api-services-sheets:v4-rev460-1.22.0'
+	compile 'org.jsoup:jsoup:1.10.2'
 	runtime('org.springframework.boot:spring-boot-devtools')
 	compileOnly('org.projectlombok:lombok')
 	testCompile('org.springframework.boot:spring-boot-starter-test')
