@@ -2,6 +2,8 @@ package org.kow.controller;
 
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.model.ValueRange;
+import org.kow.domain.User;
+import org.kow.util.POWScraper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,5 +32,14 @@ public class TestController {
         List<List<Object>> values = response.getValues();
         logger.info(values.toString());
         return "HELL";
+    }
+
+    @RequestMapping(value = "/test2")
+    public User test2() throws IOException {
+        User user = POWScraper.getUser("바트-31102");
+
+        return user;
+
+
     }
 }

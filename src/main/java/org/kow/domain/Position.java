@@ -1,5 +1,5 @@
 package org.kow.domain;
 
 public enum Position {
-    TANK, SUPPORT, DPS, FLEX
+    TANK, SUPPORT, DPS, DEFENCE, FLEX
 }
