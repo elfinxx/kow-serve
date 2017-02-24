@@ -3,9 +3,11 @@ package org.kow.controller;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.model.ValueRange;
 import org.kow.domain.User;
+import org.kow.service.UserService;
 import org.kow.util.POWScraper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -18,6 +20,9 @@ import static org.kow.util.GoogleSheetHelper.getSheetsService;
 @RequestMapping("/api")
 public class TestController {
     private Logger logger = LoggerFactory.getLogger(getClass());
+
+    @Autowired
+    UserService userService;
 
     @RequestMapping(value = "/test")
     public String test() throws IOException {
@@ -39,7 +44,11 @@ public class TestController {
         User user = POWScraper.getUser("바트-31102");
 
         return user;
+    }
 
-
+    @RequestMapping(value = "/update")
+    public List<User> updateUsers() throws IOException {
+        List<User> updatedUsers= userService.updateUsers();
+        return updatedUsers;
     }
 }

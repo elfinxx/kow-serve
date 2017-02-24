@@ -5,6 +5,7 @@ import com.google.api.services.sheets.v4.model.ValueRange;
 import org.kow.domain.Position;
 import org.kow.domain.Tier;
 import org.kow.domain.User;
+import org.kow.util.POWScraper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.kow.util.GoogleSheetHelper.getSheetsService;
 
@@ -21,6 +23,7 @@ public class GoogleSheetUserServiceImpl implements UserService {
 
     private Logger logger = LoggerFactory.getLogger(getClass());
     private Sheets service;
+    private String spreadsheetId = "1D63gLoHAt2l_yaW-F47pkjsqq-82JlGKZ5wXolEj-fI";
 
     public GoogleSheetUserServiceImpl() throws IOException {
         service = getSheetsService();
@@ -28,21 +31,10 @@ public class GoogleSheetUserServiceImpl implements UserService {
 
     @Override
     public List<User> getUsers() {
-        String spreadsheetId = "1D63gLoHAt2l_yaW-F47pkjsqq-82JlGKZ5wXolEj-fI";
         String range = "users!A2:E";
         List<User> users = new ArrayList<>();
-        try {
-            ValueRange response = service.spreadsheets().values()
-                    .get(spreadsheetId, range)
-                    .execute();
-            List<List<Object>> values = response.getValues();
-            logger.info(values.toString());
-
-            for (List<Object> userData : values) {
-                users.add(generateUserFromRawData(userData));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        for (List<Object> userData : getValuesBy(range)) {
+            users.add(generateUserFromRawData(userData));
         }
         return users;
     }
@@ -59,7 +51,7 @@ public class GoogleSheetUserServiceImpl implements UserService {
     }
 
     @Override
-    public User addUser(User aUser) {
+    public User addUser(String battleTag) {
         return null;
     }
 
@@ -70,6 +62,52 @@ public class GoogleSheetUserServiceImpl implements UserService {
 
     @Override
     public User updateUser(User aUser) {
+        return null;
+    }
+
+    @Override
+    public List<User> updateUsers() {
+        String range = "bt!A:A";
+        List<List<Object>> values = getValuesBy(range);
+        List<List<Object>> writeValues = new ArrayList<>();
+        List<User> updatedUsers = new ArrayList<>();
+        for (List<Object> userData : values) {
+            logger.info("Update " + (String) userData.get(0));
+            try {
+                User aUser = POWScraper.getUser(((String) userData.get(0)));
+                updatedUsers.add(aUser);
+//                System.out.println(writeRawDataFromUser(aUser));
+                writeValues.add(writeRawDataFromUser(aUser));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        logger.info(writeValues.toString());
+        ValueRange valueRange = new ValueRange();
+        valueRange.setValues(writeValues);
+        try {
+            service.spreadsheets().values().update(spreadsheetId, "users!A2:E", valueRange);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        List<String> bts = values.stream()
+                .map(val -> val.toString().replace("[", "").replace("]",""))
+                .collect(Collectors.toList());
+        return updatedUsers;
+    }
+
+    private List<List<Object>> getValuesBy(String range) {
+        try {
+            ValueRange response = service.spreadsheets().values()
+                    .get(spreadsheetId, range)
+                    .execute();
+            return response.getValues();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         return null;
     }
 
@@ -84,5 +122,21 @@ public class GoogleSheetUserServiceImpl implements UserService {
         user.setMost(new ArrayList<>(Arrays.asList(mostHeroes)));
 
         return user;
+    }
+
+    private List<Object> writeRawDataFromUser(User user) {
+        List<Object> rawData = new ArrayList<>();
+        rawData.add(user.getBattleTag());
+        rawData.add(user.getCompRank());
+        rawData.add(user.getTier().toString());
+        rawData.add(user.getPosition().toString());
+
+        String heroes = "";
+        for(String hero : user.getMost()) {
+            heroes = heroes.concat(hero).concat("|");
+        }
+        rawData.add(heroes);
+
+        return rawData;
     }
 }

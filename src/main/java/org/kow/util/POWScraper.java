@@ -20,7 +20,6 @@ import java.util.Map;
 @Service
 public class POWScraper {
     private static final Logger logger = LoggerFactory.getLogger(POWScraper.class);
-    private static String powUrl = "https://playoverwatch.com/ko-kr/career/pc/kr/";
 
     public static User getUser(String battleTag) throws IOException {
 
@@ -28,27 +27,36 @@ public class POWScraper {
         user.setBattleTag(battleTag.replace("-", "#"));
 
         battleTag = battleTag.replace("#", "-");
+        String powUrl = "https://playoverwatch.com/ko-kr/career/pc/kr/";
         Document doc = Jsoup.connect(powUrl + battleTag).get();
 
-        // comp rank
-        Element compRank = doc.select("div > div.competitive-rank > div").first();
-        user.setCompRank(Integer.parseInt(compRank.text()));
+        try {
+            // comp rank
+            Element compRank = doc.select("div > div.competitive-rank > div").first();
+            user.setCompRank(Integer.parseInt(compRank.text()));
 
-        // most 3
-        List<String> most = new ArrayList<>();
-        Elements playTime = doc.select("#competitive > section.content-box.u-max-width-container.hero-comparison-section > div > div.progress-category.is-partial.toggle-display.is-active > div > div.bar-container > div.bar-text");
-        for (int i = 0; i < 3; i++) {
-            Element e = playTime.get(i);
-            most.add(e.child(0).text());
+            // most 3
+            List<String> most = new ArrayList<>();
+            Elements playTime = doc.select("#competitive > section.content-box.u-max-width-container.hero-comparison-section > div > div.progress-category.is-partial.toggle-display.is-active > div > div.bar-container > div.bar-text");
+            for (int i = 0; i < 3; i++) {
+                Element e = playTime.get(i);
+                most.add(e.child(0).text());
+            }
+            user.setMost(most);
+
+            // tier
+            Elements tierElem = doc.select("#overview-section > div > div.u-max-width-container.row.content-box.gutter-18 > div > div > div.masthead-player > div > div.competitive-rank > img");
+            user.setTier(getTier(tierElem.first().attr("src")));
+
+
+            // position
+            user.setPosition(getPlayerPosition(playTime));
+        } catch (Exception e) {
+            user.setCompRank(0);
+            user.setMost(new ArrayList<>());
+            user.setPosition(Position.NONE);
+            user.setTier(Tier.NONE);
         }
-        user.setMost(most);
-
-        // tier
-        Elements tierElem = doc.select("#overview-section > div > div.u-max-width-container.row.content-box.gutter-18 > div > div > div.masthead-player > div > div.competitive-rank > img");
-        user.setTier(getTier(tierElem.first().attr("src")));
-
-        // position
-        user.setPosition(getPlayerPosition(playTime));
 
         return user;
     }
@@ -126,7 +134,7 @@ public class POWScraper {
     }
 
     private static Position getPositionBy(String heroName) {
-        switch(heroName) {
+        switch (heroName) {
             case "자리야":
             case "라인하르트":
             case "D.Va":
@@ -143,7 +151,7 @@ public class POWScraper {
 
             case "솔저: 76":
             case "파라":
-            case "리퍼":           
+            case "리퍼":
             case "솜브라":
             case "트레이서":
             case "겐지":
