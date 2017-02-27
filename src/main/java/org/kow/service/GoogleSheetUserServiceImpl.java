@@ -72,11 +72,10 @@ public class GoogleSheetUserServiceImpl implements UserService {
         List<List<Object>> writeValues = new ArrayList<>();
         List<User> updatedUsers = new ArrayList<>();
         for (List<Object> userData : values) {
-            logger.info("Update " + (String) userData.get(0));
+            logger.info("Update " + userData.get(0));
             try {
                 User aUser = POWScraper.getUser(((String) userData.get(0)));
                 updatedUsers.add(aUser);
-//                System.out.println(writeRawDataFromUser(aUser));
                 writeValues.add(writeRawDataFromUser(aUser));
             } catch (HttpStatusException e) {
               logger.info("404 존재하지 않는 페이지, 유져");
@@ -85,12 +84,11 @@ public class GoogleSheetUserServiceImpl implements UserService {
             }
         }
 
-        logger.info(writeValues.toString());
         ValueRange valueRange = new ValueRange();
         valueRange.setValues(writeValues);
         try {
             service.spreadsheets().values()
-                    .update(spreadsheetId, "users!A1:E", valueRange)
+                    .update(spreadsheetId, "users!A2:E", valueRange)
                     .setValueInputOption("RAW")
                     .execute();
         } catch (IOException e) {

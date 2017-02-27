@@ -51,4 +51,9 @@ public class TestController {
         List<User> updatedUsers= userService.updateUsers();
         return updatedUsers;
     }
+
+    @RequestMapping(value = "/check")
+    public String check() {
+        return "pong";
+    }
 }
