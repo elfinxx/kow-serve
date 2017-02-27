@@ -2,6 +2,7 @@ package org.kow.service;
 
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.model.ValueRange;
+import org.jsoup.HttpStatusException;
 import org.kow.domain.Position;
 import org.kow.domain.Tier;
 import org.kow.domain.User;
@@ -14,7 +15,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.kow.util.GoogleSheetHelper.getSheetsService;
 
@@ -78,6 +78,8 @@ public class GoogleSheetUserServiceImpl implements UserService {
                 updatedUsers.add(aUser);
 //                System.out.println(writeRawDataFromUser(aUser));
                 writeValues.add(writeRawDataFromUser(aUser));
+            } catch (HttpStatusException e) {
+              logger.info("404 존재하지 않는 페이지, 유져");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -87,14 +89,14 @@ public class GoogleSheetUserServiceImpl implements UserService {
         ValueRange valueRange = new ValueRange();
         valueRange.setValues(writeValues);
         try {
-            service.spreadsheets().values().update(spreadsheetId, "users!A2:E", valueRange);
+            service.spreadsheets().values()
+                    .update(spreadsheetId, "update_users!A1:E", valueRange)
+                    .setValueInputOption("RAW")
+                    .execute();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        List<String> bts = values.stream()
-                .map(val -> val.toString().replace("[", "").replace("]",""))
-                .collect(Collectors.toList());
         return updatedUsers;
     }
 
