@@ -90,7 +90,7 @@ public class GoogleSheetUserServiceImpl implements UserService {
         valueRange.setValues(writeValues);
         try {
             service.spreadsheets().values()
-                    .update(spreadsheetId, "update_users!A1:E", valueRange)
+                    .update(spreadsheetId, "users!A1:E", valueRange)
                     .setValueInputOption("RAW")
                     .execute();
         } catch (IOException e) {
