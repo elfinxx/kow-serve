@@ -25,7 +25,6 @@ public class GoogleSheetHelper {
 
     private static final String APPLICATION_NAME = "kow sheet";
 
-
     /**
      * Directory to store user credentials for this application.
      */
@@ -76,7 +75,6 @@ public class GoogleSheetHelper {
         // Load client secrets.
         InputStream in =
                 GoogleSheetHelper.class.getResourceAsStream("/client_secret.json");
-//            GoogleSheetHelper.class.getResourceAsStream("/cs.json");
         GoogleClientSecrets clientSecrets =
                 GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
 

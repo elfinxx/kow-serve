@@ -9,6 +9,9 @@ import org.kow.domain.User;
 import org.kow.util.POWScraper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -30,6 +33,7 @@ public class GoogleSheetUserServiceImpl implements UserService {
     }
 
     @Override
+    @Cacheable("users")
     public List<User> getUsers() {
         String range = "users!A2:E";
         List<User> users = new ArrayList<>();
@@ -41,7 +45,9 @@ public class GoogleSheetUserServiceImpl implements UserService {
 
     @Override
     public User getUser(String battleTag) {
+        battleTag = battleTag.replace('-', '#');
         List<User> users = getUsers();
+        
         for (User aUser : users) {
             if (aUser.getBattleTag().equals(battleTag)) {
                 return aUser;
@@ -66,8 +72,10 @@ public class GoogleSheetUserServiceImpl implements UserService {
     }
 
     @Override
+    @CacheEvict("users")
+    @Scheduled(fixedRate = 1000 * 60 * 60)
     public List<User> updateUsers() {
-        String range = "bt!A:A";
+        String range = "bt!A2:A";
         List<List<Object>> values = getValuesBy(range);
         List<List<Object>> writeValues = new ArrayList<>();
         List<User> updatedUsers = new ArrayList<>();
@@ -118,9 +126,10 @@ public class GoogleSheetUserServiceImpl implements UserService {
         user.setCompRank(Integer.parseInt((String) rawData.get(1)));
         user.setTier(Tier.valueOf(((String) rawData.get(2)).toUpperCase()));
         user.setPosition(Position.valueOf(((String) rawData.get(3)).toUpperCase()));
-        String[] mostHeroes = ((String) rawData.get(4)).split("\\s");
-        user.setMost(new ArrayList<>(Arrays.asList(mostHeroes)));
-
+        if (rawData.size() > 4) {
+            String[] mostHeroes = ((String) rawData.get(4)).split("\\s");
+            user.setMost(new ArrayList<>(Arrays.asList(mostHeroes)));
+        }
         return user;
     }
 
