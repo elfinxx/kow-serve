@@ -30,6 +30,17 @@ public class UserController {
         }
     }
 
+    @RequestMapping("/d_users")
+    public List<User> getDiscordUsers() {
+        List<User> users = googleSheetUserServiceImpl.getDiscordUsers();
+
+        if (users == null) {
+            return getDummyUsers();
+        } else {
+            return users;
+        }
+    }
+
     @RequestMapping("/user/{battleTag}")
     public User getUser(@PathVariable("battleTag") String battleTag) {
         return googleSheetUserServiceImpl.getUser(battleTag);

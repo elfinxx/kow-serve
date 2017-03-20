@@ -44,10 +44,29 @@ public class GoogleSheetUserServiceImpl implements UserService {
     }
 
     @Override
+    public List<User> getDiscordUsers() {
+        List<User> allUsers = getUsers();
+        List<String> bts = getDiscordMembersBts();
+        List<User> users = new ArrayList<>();
+
+        for (User user : allUsers) {
+            for (String bt : bts) {
+                if (user.getBattleTag().equals(bt)) {
+                    users.add(user);
+                    System.out.println(bt);
+                    break;
+                }
+            }
+        }
+
+        return users;
+    }
+
+    @Override
     public User getUser(String battleTag) {
         battleTag = battleTag.replace('-', '#');
         List<User> users = getUsers();
-        
+
         for (User aUser : users) {
             if (aUser.getBattleTag().equals(battleTag)) {
                 return aUser;
@@ -86,7 +105,7 @@ public class GoogleSheetUserServiceImpl implements UserService {
                 updatedUsers.add(aUser);
                 writeValues.add(writeRawDataFromUser(aUser));
             } catch (HttpStatusException e) {
-              logger.info("404 존재하지 않는 페이지, 유져");
+                logger.info("404 존재하지 않는 페이지, 유져");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -127,7 +146,7 @@ public class GoogleSheetUserServiceImpl implements UserService {
         user.setTier(Tier.valueOf(((String) rawData.get(2)).toUpperCase()));
         user.setPosition(Position.valueOf(((String) rawData.get(3)).toUpperCase()));
         if (rawData.size() > 4) {
-            String[] mostHeroes = ((String) rawData.get(4)).split("\\s");
+            String[] mostHeroes = ((String) rawData.get(4)).split("\\|");
             user.setMost(new ArrayList<>(Arrays.asList(mostHeroes)));
         }
         return user;
@@ -141,11 +160,24 @@ public class GoogleSheetUserServiceImpl implements UserService {
         rawData.add(user.getPosition().toString());
 
         String heroes = "";
-        for(String hero : user.getMost()) {
+        for (String hero : user.getMost()) {
             heroes = heroes.concat(hero).concat("|");
         }
         rawData.add(heroes);
 
         return rawData;
+    }
+
+    private List<String> getDiscordMembersBts() {
+        String range = "bt!A2:D";
+        List<List<Object>> values = getValuesBy(range);
+        List<String> bts = new ArrayList<>();
+        for (List<Object> userData : values) {
+            if (userData.size() >= 4) {
+                bts.add((String) userData.get(0));
+            }
+        }
+
+        return bts;
     }
 }

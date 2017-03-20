@@ -6,6 +6,7 @@ import java.util.List;
 
 public interface UserService {
     List<User> getUsers();
+    List<User> getDiscordUsers();
     User getUser(String battleTag);
     User addUser(String battleTag);
     User removeUser(String battleTag);
