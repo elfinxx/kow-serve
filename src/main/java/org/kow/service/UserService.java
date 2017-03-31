@@ -12,5 +12,8 @@ public interface UserService {
     User removeUser(String battleTag);
     User updateUser(User aUser);
 
+    List<String> getJjals();
+    String addJjal(String jjal);
+
     List<User> updateUsers();
 }

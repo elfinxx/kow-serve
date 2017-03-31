@@ -57,7 +57,7 @@ public class UserController {
                 5000,
                 most,
                 Tier.MASTER,
-                Position.SUPPORT);
+                Position.SUPPORT, "Kakao", "aaa");
         users.add(aUser);
 
         return users;

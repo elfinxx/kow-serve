@@ -17,4 +17,6 @@ public class User {
     private List<String> Most;
     private Tier tier;
     private Position position;
+    private String group;
+    private String overlogId;
 }

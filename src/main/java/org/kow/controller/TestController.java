@@ -8,6 +8,7 @@ import org.kow.util.POWScraper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -55,5 +56,11 @@ public class TestController {
     @RequestMapping(value = "/check")
     public String check() {
         return "pong";
+    }
+
+    @RequestMapping(value = "/pubCallback")
+    public String pubCallback(@RequestBody String body) {
+        logger.info(body);
+        return body;
     }
 }

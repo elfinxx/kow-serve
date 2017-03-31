@@ -44,6 +44,42 @@ public class GoogleSheetUserServiceImpl implements UserService {
     }
 
     @Override
+    @Cacheable("jjals")
+    public List<String> getJjals() {
+        String range = "jjal!A2:A";
+        List<String> jjals = new ArrayList<>();
+        for (List<Object> rawData : getValuesBy(range)) {
+            jjals.add((String) rawData.get(0));
+        }
+        return jjals;
+    }
+
+    @Override
+    public String addJjal(String jjal) {
+        String range = "jjal!A2:A";
+        List<List<Object>> values = getValuesBy(range);
+
+        logger.info(jjal);
+
+        List<Object> addValue = new ArrayList<>();
+        addValue.add(jjal);
+        values.add(addValue);
+
+        ValueRange valueRange = new ValueRange();
+        valueRange.setValues(values);
+        try {
+            service.spreadsheets().values()
+                    .update(spreadsheetId, "jjal!A2:A", valueRange)
+                    .setValueInputOption("RAW")
+                    .execute();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return jjal;
+    }
+
+    @Override
     public List<User> getDiscordUsers() {
         List<User> allUsers = getUsers();
         List<String> bts = getDiscordMembersBts();
@@ -94,7 +130,7 @@ public class GoogleSheetUserServiceImpl implements UserService {
     @CacheEvict("users")
     @Scheduled(fixedRate = 1000 * 60 * 60)
     public List<User> updateUsers() {
-        String range = "bt!A2:A";
+        String range = "bt!A2:C";
         List<List<Object>> values = getValuesBy(range);
         List<List<Object>> writeValues = new ArrayList<>();
         List<User> updatedUsers = new ArrayList<>();
@@ -102,6 +138,8 @@ public class GoogleSheetUserServiceImpl implements UserService {
             logger.info("Update " + userData.get(0));
             try {
                 User aUser = POWScraper.getUser(((String) userData.get(0)));
+                aUser.setOverlogId((String) userData.get(1));
+                aUser.setGroup((String) userData.get(2));
                 updatedUsers.add(aUser);
                 writeValues.add(writeRawDataFromUser(aUser));
             } catch (HttpStatusException e) {
