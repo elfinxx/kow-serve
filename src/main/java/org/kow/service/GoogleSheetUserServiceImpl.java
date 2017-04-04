@@ -35,7 +35,7 @@ public class GoogleSheetUserServiceImpl implements UserService {
     @Override
     @Cacheable("users")
     public List<User> getUsers() {
-        String range = "users!A2:E";
+        String range = "users!A2:G";
         List<User> users = new ArrayList<>();
         for (List<Object> userData : getValuesBy(range)) {
             users.add(generateUserFromRawData(userData));
@@ -153,7 +153,7 @@ public class GoogleSheetUserServiceImpl implements UserService {
         valueRange.setValues(writeValues);
         try {
             service.spreadsheets().values()
-                    .update(spreadsheetId, "users!A2:E", valueRange)
+                    .update(spreadsheetId, "users!A2:G", valueRange)
                     .setValueInputOption("RAW")
                     .execute();
         } catch (IOException e) {
@@ -183,9 +183,11 @@ public class GoogleSheetUserServiceImpl implements UserService {
         user.setCompRank(Integer.parseInt((String) rawData.get(1)));
         user.setTier(Tier.valueOf(((String) rawData.get(2)).toUpperCase()));
         user.setPosition(Position.valueOf(((String) rawData.get(3)).toUpperCase()));
-        if (rawData.size() > 4) {
-            String[] mostHeroes = ((String) rawData.get(4)).split("\\|");
-            user.setMost(new ArrayList<>(Arrays.asList(mostHeroes)));
+        String[] mostHeroes = ((String) rawData.get(4)).split("\\|");
+        user.setMost(new ArrayList<>(Arrays.asList(mostHeroes)));
+        user.setGroup((String) rawData.get(5));
+        if (rawData.size() > 6) {
+            user.setOverlogId((String) rawData.get(6));
         }
         return user;
     }
@@ -202,6 +204,8 @@ public class GoogleSheetUserServiceImpl implements UserService {
             heroes = heroes.concat(hero).concat("|");
         }
         rawData.add(heroes);
+        rawData.add(user.getGroup());
+        rawData.add(user.getOverlogId());
 
         return rawData;
     }
@@ -217,5 +221,40 @@ public class GoogleSheetUserServiceImpl implements UserService {
         }
 
         return bts;
+    }
+
+    @Scheduled(fixedRate = 1000 * 60 * 60)
+    public List<User> updateSSUsers() {
+        String range = "team_samsung_bt!A2:C";
+        List<List<Object>> values = getValuesBy(range);
+        List<List<Object>> writeValues = new ArrayList<>();
+        List<User> updatedUsers = new ArrayList<>();
+        for (List<Object> userData : values) {
+            logger.info("Update " + userData.get(0));
+            try {
+                User aUser = POWScraper.getUser(((String) userData.get(0)));
+                aUser.setOverlogId((String) userData.get(1));
+                aUser.setGroup((String) userData.get(2));
+                updatedUsers.add(aUser);
+                writeValues.add(writeRawDataFromUser(aUser));
+            } catch (HttpStatusException e) {
+                logger.info("404 존재하지 않는 페이지, 유져");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        ValueRange valueRange = new ValueRange();
+        valueRange.setValues(writeValues);
+        try {
+            service.spreadsheets().values()
+                    .update(spreadsheetId, "team_samsung_users!A2:G", valueRange)
+                    .setValueInputOption("RAW")
+                    .execute();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return updatedUsers;
     }
 }
